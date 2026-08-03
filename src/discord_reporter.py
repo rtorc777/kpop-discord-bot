@@ -13,7 +13,7 @@ def build_discord_embeds(report: KpopDailyReport) -> List[dict]:
     # Main Header Embed
     header_embed = {
         "title": "🇰🇷 r/kpop Daily Digest",
-        "description": f"Here is your daily AI-curated summary of top K-Pop news, comebacks, and tours for **{today_str}**!",
+        "description": f"Your daily AI-curated summary of top K-Pop news, comebacks, and tours for **{today_str}**.",
         "color": 0xFF007F,  # Neon Pink
         "footer": {
             "text": "Powered by Gemini AI & r/kpop | Automated GitHub Action"
@@ -22,11 +22,11 @@ def build_discord_embeds(report: KpopDailyReport) -> List[dict]:
     }
     embeds.append(header_embed)
 
-    # Categories configuration: (items, title, emoji, color)
+    # Categories: (items, title, emoji, color)
     categories = [
         (report.comebacks_and_releases, "Comebacks & Releases", "🚀", 0x9B59B6),  # Purple
-        (report.tours_and_concerts, "Tours & Concerts", "🎫", 0x3498DB),        # Blue
-        (report.industry_news, "Industry News", "📰", 0xE67E22),               # Orange
+        (report.tours_and_concerts, "Tours & Concerts", "🎫", 0x3498DB),          # Blue
+        (report.industry_news, "Industry News", "📰", 0xE67E22),                  # Orange
     ]
 
     for items, cat_name, emoji, color in categories:
@@ -55,16 +55,15 @@ def build_discord_embeds(report: KpopDailyReport) -> List[dict]:
                 "inline": False
             })
 
-
         embeds.append(embed)
 
     return embeds
 
 
 def send_to_discord(webhook_url: str, embeds: List[dict]):
-    """Send constructed embed payloads to Discord Webhook."""
+    """Send embed payloads to a Discord Webhook, batching by 10 (Discord API limit)."""
     logger.info(f"Sending report with {len(embeds)} embeds to Discord Webhook...")
-    
+
     batch_size = 10
     for i in range(0, len(embeds), batch_size):
         chunk = embeds[i:i + batch_size]
@@ -73,7 +72,7 @@ def send_to_discord(webhook_url: str, embeds: List[dict]):
         with httpx.Client(timeout=10.0) as client:
             res = client.post(webhook_url, json=payload)
             if res.status_code in [200, 204]:
-                logger.info(f"Successfully posted embed chunk {i//batch_size + 1} to Discord!")
+                logger.info(f"Successfully posted embed chunk {i // batch_size + 1} to Discord!")
             else:
                 logger.error(f"Discord Webhook returned status code {res.status_code}: {res.text}")
                 res.raise_for_status()

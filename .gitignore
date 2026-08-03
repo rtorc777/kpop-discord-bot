@@ -9,11 +9,15 @@ __pycache__/
 *.pyo
 *.pyd
 
-# Environment Variables & Local Secrets
+# Environment Variables & Local Secrets — NEVER commit these
 .env
 .env.local
+.env.*
+!.env.example
 
 # IDE & OS files
 .DS_Store
 .vscode/
 .idea/
+*.swp
+*~
