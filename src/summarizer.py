@@ -1,4 +1,5 @@
 import json
+import time
 from typing import List
 from src.config import logger
 from src.models import KpopDailyReport
@@ -12,11 +13,20 @@ def summarize_posts_with_gemini(posts: List[dict], api_key: str) -> KpopDailyRep
     logger.info("Initializing Gemini API client...")
     client = genai.Client(api_key=api_key)
 
-    posts_text = json.dumps(posts, indent=2)
+    # Trim post details to reduce token usage and keep within free tier limits
+    compact_posts = []
+    for p in posts[:25]:
+        compact_posts.append({
+            "title": p.get("title"),
+            "url": p.get("url") or p.get("reddit_url"),
+            "flair": p.get("flair", "")
+        })
+
+    posts_text = json.dumps(compact_posts, indent=2)
 
     prompt = f"""
 You are an expert K-Pop journalist and analyst.
-Below is a list of top posts from r/kpop over the past 24 hours in JSON format.
+Below is a list of top daily posts from r/kpop in JSON format.
 
 Your task:
 1. Analyze the posts and group them into 4 distinct categories:
@@ -26,37 +36,49 @@ Your task:
    - highlights_and_discussion: High-performing discussions, variety content, performance clips, achievements.
 
 2. For each category:
-   - Pick the most important and high-impact posts (up to 5 top items per category).
-   - Clean up titles and write a concise 1-2 sentence informative summary for each item.
+   - Pick the top items (up to 5 per category).
+   - Clean up titles and write a 1 sentence summary for each item.
    - Identify the primary artist/group involved.
-   - Preserve the post_url (use the 'url' or 'reddit_url' provided in the raw data).
-   - Retain the upvotes count and flair.
+   - Preserve the exact post 'url'.
 
-Raw Reddit Posts Data:
+Raw Posts Data:
 {posts_text}
 """
 
-    models_to_try = ["gemini-2.0-flash", "gemini-1.5-flash"]
+    # List of models ordered by free tier availability
+    models_to_try = [
+        "gemini-1.5-flash",
+        "gemini-2.0-flash-lite",
+        "gemini-1.5-flash-8b",
+        "gemini-2.0-flash"
+    ]
     last_exception = None
 
     for model_name in models_to_try:
         logger.info(f"Sending request to Gemini model ({model_name})...")
-        try:
-            response = client.models.generate_content(
-                model=model_name,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    response_schema=KpopDailyReport,
-                    temperature=0.2,
+        for attempt in range(2):  # Try twice per model with backoff
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        response_schema=KpopDailyReport,
+                        temperature=0.2,
+                    )
                 )
-            )
-            report = KpopDailyReport.model_validate_json(response.text)
-            logger.info(f"Gemini summarization complete using {model_name}!")
-            return report
-        except Exception as e:
-            logger.warning(f"Gemini model {model_name} failed: {e}")
-            last_exception = e
+                report = KpopDailyReport.model_validate_json(response.text)
+                logger.info(f"Gemini summarization complete using {model_name}!")
+                return report
+            except Exception as e:
+                err_msg = str(e)
+                logger.warning(f"Attempt {attempt + 1} for model {model_name} failed: {err_msg}")
+                last_exception = e
+                if "429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg:
+                    logger.info("Rate limit hit, waiting 2 seconds before retrying...")
+                    time.sleep(2)
+                else:
+                    break  # Non-rate-limit error, try next model
 
     logger.error("All Gemini model attempts failed.")
     raise last_exception
