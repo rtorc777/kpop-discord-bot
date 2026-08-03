@@ -36,21 +36,27 @@ Raw Reddit Posts Data:
 {posts_text}
 """
 
-    logger.info("Sending request to Gemini model (gemini-2.5-flash)...")
-    try:
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                response_schema=KpopDailyReport,
-                temperature=0.2,
-            )
-        )
-        report = KpopDailyReport.model_validate_json(response.text)
-        logger.info("Gemini summarization complete!")
-        return report
+    models_to_try = ["gemini-2.0-flash", "gemini-1.5-flash"]
+    last_exception = None
 
-    except Exception as e:
-        logger.error(f"Error during Gemini processing: {e}")
-        raise
+    for model_name in models_to_try:
+        logger.info(f"Sending request to Gemini model ({model_name})...")
+        try:
+            response = client.models.generate_content(
+                model=model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=KpopDailyReport,
+                    temperature=0.2,
+                )
+            )
+            report = KpopDailyReport.model_validate_json(response.text)
+            logger.info(f"Gemini summarization complete using {model_name}!")
+            return report
+        except Exception as e:
+            logger.warning(f"Gemini model {model_name} failed: {e}")
+            last_exception = e
+
+    logger.error("All Gemini model attempts failed.")
+    raise last_exception
