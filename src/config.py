@@ -1,10 +1,13 @@
 import os
 import sys
 import logging
-from dotenv import load_dotenv
 
-# Load environment variables from .env file if available
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 
 def setup_logging():
     """Configure application logging."""
@@ -14,6 +17,7 @@ def setup_logging():
         handlers=[logging.StreamHandler(sys.stdout)]
     )
     return logging.getLogger("kpop_reporter")
+
 
 logger = setup_logging()
 
