@@ -22,6 +22,13 @@ def setup_logging():
 logger = setup_logging()
 
 # Environment settings
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
+DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL", "").strip()
 REDDIT_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+
+if GEMINI_API_KEY and not GEMINI_API_KEY.startswith("AIzaSy"):
+    logger.warning(
+        "GEMINI_API_KEY does not start with 'AIzaSy'. "
+        "Make sure you created your key at https://aistudio.google.com/ ("
+        "Google AI Studio keys start with 'AIzaSy...')."
+    )

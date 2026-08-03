@@ -13,7 +13,7 @@ def summarize_posts_with_gemini(posts: List[dict], api_key: str) -> KpopDailyRep
     logger.info("Initializing Gemini API client...")
     client = genai.Client(api_key=api_key)
 
-    # Trim post details to reduce token usage and keep within free tier limits
+    # Trim post details to keep prompt lean & fast
     compact_posts = []
     for p in posts[:25]:
         compact_posts.append({
@@ -45,40 +45,35 @@ Raw Posts Data:
 {posts_text}
 """
 
-    # List of models ordered by free tier availability
+    # List of models ordered by standard free tier availability
     models_to_try = [
         "gemini-1.5-flash",
-        "gemini-2.0-flash-lite",
         "gemini-1.5-flash-8b",
+        "gemini-2.0-flash-lite",
         "gemini-2.0-flash"
     ]
     last_exception = None
 
     for model_name in models_to_try:
-        logger.info(f"Sending request to Gemini model ({model_name})...")
-        for attempt in range(2):  # Try twice per model with backoff
-            try:
-                response = client.models.generate_content(
-                    model=model_name,
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        response_mime_type="application/json",
-                        response_schema=KpopDailyReport,
-                        temperature=0.2,
-                    )
+        logger.info(f"Attempting summarization with Gemini model ({model_name})...")
+        try:
+            response = client.models.generate_content(
+                model=model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=KpopDailyReport,
+                    temperature=0.2,
                 )
-                report = KpopDailyReport.model_validate_json(response.text)
-                logger.info(f"Gemini summarization complete using {model_name}!")
-                return report
-            except Exception as e:
-                err_msg = str(e)
-                logger.warning(f"Attempt {attempt + 1} for model {model_name} failed: {err_msg}")
-                last_exception = e
-                if "429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg:
-                    logger.info("Rate limit hit, waiting 2 seconds before retrying...")
-                    time.sleep(2)
-                else:
-                    break  # Non-rate-limit error, try next model
+            )
+            report = KpopDailyReport.model_validate_json(response.text)
+            logger.info(f"Gemini summarization complete using {model_name}!")
+            return report
+        except Exception as e:
+            err_msg = str(e)
+            logger.warning(f"Model {model_name} failed: {err_msg}")
+            last_exception = e
+            # Immediately continue to next model in list if quota or model error occurs
 
     logger.error("All Gemini model attempts failed.")
     raise last_exception
