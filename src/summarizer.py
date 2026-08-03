@@ -45,10 +45,11 @@ Raw Posts Data:
 {posts_text}
 """
 
-    # List of models ordered by standard free tier availability
+    # List of models supported by active API keys
     models_to_try = [
-        "gemini-1.5-flash",
-        "gemini-1.5-flash-8b",
+        "gemini-flash-latest",
+        "gemini-flash-lite-latest",
+        "gemini-2.5-flash",
         "gemini-2.0-flash-lite",
         "gemini-2.0-flash"
     ]
@@ -73,7 +74,6 @@ Raw Posts Data:
             err_msg = str(e)
             logger.warning(f"Model {model_name} failed: {err_msg}")
             last_exception = e
-            # Immediately continue to next model in list if quota or model error occurs
 
     logger.error("All Gemini model attempts failed.")
     raise last_exception
