@@ -39,7 +39,7 @@ def build_discord_embeds(report: KpopDailyReport) -> List[dict]:
             "fields": []
         }
 
-        for i, item in enumerate(items[:5]):
+        for item in items[:5]:
             artist_str = f"**[{item.artist}]** " if item.artist else ""
             field_name = f"{artist_str}{item.title[:200]}"
 
@@ -55,13 +55,6 @@ def build_discord_embeds(report: KpopDailyReport) -> List[dict]:
                 "inline": False
             })
 
-            # Add blank spacer field between entries for visual breathing room
-            if i < len(items[:5]) - 1:
-                embed["fields"].append({
-                    "name": "\u200b",
-                    "value": "\u200b",
-                    "inline": False
-                })
 
         embeds.append(embed)
 
