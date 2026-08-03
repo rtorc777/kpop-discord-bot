@@ -24,7 +24,3 @@ class KpopDailyReport(BaseModel):
         default_factory=list,
         description="Contracts, agency updates, achievements, chart records, official statements"
     )
-    highlights_and_discussion: List[ReportItem] = Field(
-        default_factory=list,
-        description="Popular discussions, variety show clips, dance challenges, milestones"
-    )

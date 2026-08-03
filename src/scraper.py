@@ -74,25 +74,33 @@ def fetch_top_kpop_posts(limit: int = 50) -> List[dict]:
     }
 
     # Tier 1: RSS-to-JSON Proxy Endpoints (Bypasses GitHub Actions IP restrictions 100%)
-    proxy_urls = [
-        "https://feed2json.org/convert?url=https%3A%2F%2Fwww.reddit.com%2Fr%2Fkpop%2Ftop.rss%3Ft%3Dday",
-        "https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fwww.reddit.com%2Fr%2Fkpop%2Ftop.rss%3Ft%3Dday"
+    # Note: Reddit RSS feeds cap at 25 entries per request, so we merge top + hot
+    proxy_configs = [
+        ("https://feed2json.org/convert?url=https%3A%2F%2Fwww.reddit.com%2Fr%2Fkpop%2Ftop.rss%3Ft%3Dday", "feed2json top"),
+        ("https://feed2json.org/convert?url=https%3A%2F%2Fwww.reddit.com%2Fr%2Fkpop%2Fhot.rss", "feed2json hot"),
+        ("https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fwww.reddit.com%2Fr%2Fkpop%2Ftop.rss%3Ft%3Dday", "rss2json top"),
+        ("https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fwww.reddit.com%2Fr%2Fkpop%2Fhot.rss", "rss2json hot"),
     ]
 
-    for url in proxy_urls:
-        logger.info(f"Attempting fetch from RSS proxy: {url}...")
+    seen_urls = set()
+    all_proxy_posts = []
+
+    for url, label in proxy_configs:
+        if len(all_proxy_posts) >= limit:
+            break
+        logger.info(f"Attempting fetch from RSS proxy ({label}): {url}...")
         status, text = fetch_url(url, headers)
         if status == 200 and text:
             try:
                 data = json.loads(text)
                 items = data.get("items", [])
                 if items:
-                    posts = []
                     for item in items:
                         title = html.unescape(item.get("title", ""))
                         link = item.get("url") or item.get("link") or ""
-                        if title:
-                            posts.append({
+                        if title and link not in seen_urls:
+                            seen_urls.add(link)
+                            all_proxy_posts.append({
                                 "title": title,
                                 "flair": "",
                                 "url": link,
@@ -101,11 +109,13 @@ def fetch_top_kpop_posts(limit: int = 50) -> List[dict]:
                                 "comments": 0,
                                 "created_utc": 0
                             })
-                    if posts:
-                        logger.info(f"Successfully retrieved {len(posts)} posts via RSS proxy!")
-                        return posts[:limit]
             except Exception as e:
                 logger.warning(f"Error parsing RSS proxy payload from {url}: {e}")
+
+    if all_proxy_posts:
+        logger.info(f"Successfully retrieved {len(all_proxy_posts)} posts via RSS proxy!")
+        return all_proxy_posts[:limit]
+
 
     # Tier 2: Direct Reddit JSON Endpoints
     json_urls = [

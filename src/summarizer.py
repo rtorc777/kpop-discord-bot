@@ -17,11 +17,10 @@ You are an expert K-Pop journalist and analyst.
 Below is a list of top daily posts from r/kpop in JSON format.
 
 Your task:
-1. Analyze the posts and group them into 4 distinct categories:
+1. Analyze the posts and group them into 3 distinct categories:
    - comebacks_and_releases: MVs, Teasers, Tracklists, Concept Photos, Album releases.
    - tours_and_concerts: Tour announcements, concert dates, ticketing info, world tours.
    - industry_news: Agency news, contract updates, chart records, military updates, official statements.
-   - highlights_and_discussion: High-performing discussions, variety content, performance clips, achievements.
 
 2. For each category:
    - Pick the top items (up to 5 per category).
@@ -33,8 +32,7 @@ Respond strictly with valid JSON conforming to this schema:
 {{
   "comebacks_and_releases": [{"title": "", "artist": "", "summary": "", "post_url": "", "upvotes": 0, "flair": ""}],
   "tours_and_concerts": [{"title": "", "artist": "", "summary": "", "post_url": "", "upvotes": 0, "flair": ""}],
-  "industry_news": [{"title": "", "artist": "", "summary": "", "post_url": "", "upvotes": 0, "flair": ""}],
-  "highlights_and_discussion": [{"title": "", "artist": "", "summary": "", "post_url": "", "upvotes": 0, "flair": ""}]
+  "industry_news": [{"title": "", "artist": "", "summary": "", "post_url": "", "upvotes": 0, "flair": ""}]
 }}
 
 Raw Posts Data:
@@ -76,11 +74,10 @@ You are an expert K-Pop journalist and analyst.
 Below is a list of top daily posts from r/kpop in JSON format.
 
 Your task:
-1. Analyze the posts and group them into 4 distinct categories:
+1. Analyze the posts and group them into 3 distinct categories:
    - comebacks_and_releases: MVs, Teasers, Tracklists, Concept Photos, Album releases.
    - tours_and_concerts: Tour announcements, concert dates, ticketing info, world tours.
    - industry_news: Agency news, contract updates, chart records, military updates, official statements.
-   - highlights_and_discussion: High-performing discussions, variety content, performance clips, achievements.
 
 2. For each category:
    - Pick the top items (up to 5 per category).
@@ -131,7 +128,7 @@ def summarize_posts_with_gemini(posts: List[dict], api_key: str) -> KpopDailyRep
 
     # Trim posts payload
     compact_posts = []
-    for p in posts[:25]:
+    for p in posts[:40]:
         compact_posts.append({
             "title": p.get("title"),
             "url": p.get("url") or p.get("reddit_url"),

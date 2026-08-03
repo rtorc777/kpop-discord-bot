@@ -13,7 +13,7 @@ def build_discord_embeds(report: KpopDailyReport) -> List[dict]:
     # Main Header Embed
     header_embed = {
         "title": "🇰🇷 r/kpop Daily Digest",
-        "description": f"Here is your daily AI-curated summary of top K-Pop news, comebacks, tours, and community highlights for **{today_str}**!",
+        "description": f"Here is your daily AI-curated summary of top K-Pop news, comebacks, and tours for **{today_str}**!",
         "color": 0xFF007F,  # Neon Pink
         "footer": {
             "text": "Powered by Gemini AI & r/kpop | Automated GitHub Action"
@@ -27,7 +27,6 @@ def build_discord_embeds(report: KpopDailyReport) -> List[dict]:
         (report.comebacks_and_releases, "Comebacks & Releases", "🚀", 0x9B59B6),  # Purple
         (report.tours_and_concerts, "Tours & Concerts", "🎫", 0x3498DB),        # Blue
         (report.industry_news, "Industry News", "📰", 0xE67E22),               # Orange
-        (report.highlights_and_discussion, "Highlights & Discussions", "🌟", 0x2ECC71) # Green
     ]
 
     for items, cat_name, emoji, color in categories:
@@ -40,10 +39,10 @@ def build_discord_embeds(report: KpopDailyReport) -> List[dict]:
             "fields": []
         }
 
-        for item in items[:5]:
+        for i, item in enumerate(items[:5]):
             artist_str = f"**[{item.artist}]** " if item.artist else ""
             field_name = f"{artist_str}{item.title[:200]}"
-            
+
             flair_badge = f"`[{item.flair}]` " if item.flair else ""
             source_link = f"[🔗 Read More]({item.post_url})"
             upvote_badge = f" ⬆️ {item.upvotes:,}" if item.upvotes > 0 else ""
@@ -55,6 +54,14 @@ def build_discord_embeds(report: KpopDailyReport) -> List[dict]:
                 "value": field_value[:1024],
                 "inline": False
             })
+
+            # Add blank spacer field between entries for visual breathing room
+            if i < len(items[:5]) - 1:
+                embed["fields"].append({
+                    "name": "\u200b",
+                    "value": "\u200b",
+                    "inline": False
+                })
 
         embeds.append(embed)
 
