@@ -16,37 +16,24 @@ from src.discord_reporter import build_discord_embeds, send_to_discord
 
 def main():
     parser = argparse.ArgumentParser(description="r/kpop Daily AI Reporter Bot")
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Print the generated report to stdout without posting to Discord."
-    )
+    parser.add_argument("--dry-run", action="store_true", help="Print generated report to stdout without sending to Discord")
     args = parser.parse_args()
 
-    # Validate required environment variables
     if not GEMINI_API_KEY:
-        logger.error("GEMINI_API_KEY environment variable is missing. Set it in your .env file or GitHub Secrets.")
+        logger.error("GEMINI_API_KEY environment variable is missing!")
         sys.exit(1)
 
     if not DISCORD_WEBHOOK_URL and not args.dry_run:
-        logger.error(
-            "DISCORD_WEBHOOK_URL environment variable is missing. "
-            "Set it in your .env file or GitHub Secrets, or use --dry-run to test locally."
-        )
-        sys.exit(1)
-
-    # Validate webhook URL format
-    if DISCORD_WEBHOOK_URL and not DISCORD_WEBHOOK_URL.startswith("https://"):
-        logger.error("DISCORD_WEBHOOK_URL must be an HTTPS URL.")
+        logger.error("DISCORD_WEBHOOK_URL environment variable is missing! (Use --dry-run to test locally without Discord)")
         sys.exit(1)
 
     # 1. Fetch Reddit posts
     posts = fetch_top_kpop_posts(limit=40)
     if not posts:
-        logger.warning("No posts retrieved from r/kpop. Exiting.")
+        logger.warning("No posts retrieved. Exiting.")
         sys.exit(0)
 
-    # 2. Summarize via Gemini AI
+    # 2. Summarize via Gemini API
     report = summarize_posts_with_gemini(posts, GEMINI_API_KEY)
 
     # 3. Build Discord Embeds
@@ -54,10 +41,10 @@ def main():
 
     # 4. Output or Deliver
     if args.dry_run or not DISCORD_WEBHOOK_URL:
-        logger.info("=== DRY RUN MODE: No message will be sent to Discord ===")
-        print("\n--- Generated Report (JSON) ---")
+        logger.info("=== DRY RUN MODE ENABLED ===")
+        print("\nGenerated Report JSON:")
         print(report.model_dump_json(indent=2))
-        print("\n--- Discord Embeds Payload ---")
+        print("\nGenerated Discord Embeds Payload:")
         print(json.dumps(embeds, indent=2))
     else:
         send_to_discord(DISCORD_WEBHOOK_URL, embeds)
