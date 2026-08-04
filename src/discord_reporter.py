@@ -11,8 +11,9 @@ def build_discord_embeds(report: KpopDailyReport) -> dict:
 
     # Plain message content — this is what actually triggers the @everyone ping.
     content = (
-        f"@everyone 🇰🇷 **r/kpop Daily Digest** — {today_str}\n"
-        f"Your AI-curated summary of top K-Pop news, comebacks, and tours!"
+        f"@everyone\n"
+        f"🇰🇷 **r/kpop Daily Digest** — {today_str}\n"
+        f"*AI K-Pop Daily: News, Comebacks & Tours*"
     )
 
     embeds = []

@@ -2,8 +2,8 @@ name: Daily r/kpop AI Reporter
 
 on:
   schedule:
-    # Runs daily at 6AM EST (Adjust time if desired)
-    - cron: '0 10 * * *'
+    # Runs daily at 11:13PM EST (Adjust time if desired)
+    - cron: '13 15 * * *'
   workflow_dispatch:
     # Allows manually triggering the job from the GitHub Actions tab
 
