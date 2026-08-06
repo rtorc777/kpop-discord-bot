@@ -2,8 +2,8 @@ name: Daily r/kpop AI Reporter
 
 on:
   schedule:
-    # Runs daily at 12PM EST (Adjust time if desired)
-    - cron: '0 12 * * *'
+    # Runs daily at around 11 AM EST (Adjust time if desired)
+    - cron: '7 11 * * *'
       timezone: 'America/New_York'
       
   workflow_dispatch:
